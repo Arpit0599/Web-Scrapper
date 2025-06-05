@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Professional Interactive Web Scraper</title>
+<style>
+  :root {
+    --primary-color: #2563eb;
+    --secondary-color: #3b82f6;
+    --bg-color: #f9fafb;
+    --text-color: #1e293b;
+    --card-bg: white;
+    --shadow: rgba(37, 99, 235, 0.2);
+    --error-color: #dc2626;
+    --success-color: #16a34a;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1.25rem 2rem;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    box-shadow: 0 3px 8px var(--shadow);
+  }
+  main {
+    max-width: 900px;
+    margin: 2rem auto 3rem;
+    padding: 0 1rem;
+    flex-grow: 1;
+  }
+  form {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    grid-row-gap: 1rem;
+    grid-column-gap: 1rem;
+    align-items: center;
+  }
+  label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--primary-color);
+  }
+  input[type="url"], input[type="text"] {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    border: 2px solid #94a3b8;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+    width: 100%;
+  }
+  input[type="url"]:focus, input[type="text"]:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+  }
+  button {
+    grid-column: 2 / 3;
+    justify-self: start;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.6rem 1.3rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover:not(:disabled) {
+    background-color: var(--secondary-color);
+  }
+  button:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+  }
+  #message {
+    margin-top: 1rem;
+    font-weight: 600;
+  }
+  #message.error {
+    color: var(--error-color);
+  }
+  #message.success {
+    color: var(--success-color);
+  }
+  #results {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--card-bg);
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    word-break: break-word;
+  }
+  .card-header {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+  }
+  .card-content {
+    flex-grow: 1;
+    white-space: pre-line;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+  }
+  footer {
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #64748b;
+    border-top: 1px solid #cbd5e1;
+  }
+  @media (max-width: 400px) {
+    form {
+      grid-template-columns: 1fr;
+    }
+    label, button, input[type="url"], input[type="text"] {
+      width: 100%;
+    }
+    button {
+      grid-column: auto;
+    }
+  }
+</style>
+</head>
+<body>
+<header>Professional Interactive Web Scraper</header>
+
+<main>
+  <form id="scrapeForm" autocomplete="off" aria-label="Web scraping input form">
+    <label for="urlInput">Website URL:</label>
+    <input type="url" id="urlInput" placeholder="https://example.com" required aria-required="true" aria-describedby="urlHelp" />
+    <label for="selectorInput">CSS Selector:</label>
+    <input type="text" id="selectorInput" placeholder="e.g. p, h1, .class, #id" required aria-required="true" aria-describedby="selectorHelp" />
+    <div></div> <!-- filler grid cell -->
+    <button type="submit" id="scrapeBtn" aria-label="Start scraping the specified website and selector">Scrape</button>
+  </form>
+  <div id="urlHelp" style="font-size:0.85rem; color:#475569; margin-top: 0.25rem; margin-left: 2.5rem;">Enter the complete URL with http/https</div>
+  <div id="selectorHelp" style="font-size:0.85rem; color:#475569; margin-top: 0.1rem; margin-left: 2.5rem; margin-bottom:1rem;">
+    Enter a valid CSS selector to target elements to scrape.
+  </div>
+  <div id="message" role="alert" aria-live="assertive"></div>
+  <section id="results" aria-label="Scraped results"></section>
+</main>
+
+<footer>© 2024 Interactive Web Scraper - Uses public CORS proxy for fetching data</footer>
+
+<script>
+  const form = document.getElementById('scrapeForm');
+  const urlInput = document.getElementById('urlInput');
+  const selectorInput = document.getElementById('selectorInput');
+  const messageEl = document.getElementById('message');
+  const resultsEl = document.getElementById('results');
+  const scrapeBtn = document.getElementById('scrapeBtn');
+
+  // Use All Origins public CORS proxy to bypass browser CORS
+  const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+
+  // Clear results and message
+  function clearOutput() {
+    messageEl.textContent = '';
+    messageEl.className = '';
+    resultsEl.innerHTML = '';
+  }
+
+  // Show message of type: error or success
+  function showMessage(msg, type = '') {
+    messageEl.textContent = msg;
+    messageEl.className = type;
+  }
+
+  // Create and return a card element with header and content
+  function createCard(title, content) {
+    const card = document.createElement('article');
+    card.className = 'card';
+
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.textContent = title;
+    card.appendChild(header);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'card-content';
+    contentDiv.textContent = content;
+    card.appendChild(contentDiv);
+
+    return card;
+  }
+
+  // Main scraping logic
+  async function scrape(url, selector) {
+    clearOutput();
+    showMessage('Fetching data...', '');
+    scrapeBtn.disabled = true;
+    scrapeBtn.textContent = 'Scraping...';
+
+    try {
+      const encodedUrl = encodeURIComponent(url);
+      const fetchUrl = CORS_PROXY + encodedUrl;
+
+      const response = await fetch(fetchUrl);
+
+      if (!response.ok) {
+        throw new Error(`Network error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data.contents, 'text/html');
+
+      // Select elements
+      const elements = doc.querySelectorAll(selector);
+
+      if (elements.length === 0) {
+        showMessage(`No elements found matching selector "${selector}".`, 'error');
+        return;
+      }
+
+      // Display results
+      resultsEl.innerHTML = '';
+      elements.forEach((el, i) => {
+        let text = el.textContent.trim();
+        if (!text) {
+          // fallback to limited innerHTML snippet if no text
+          text = el.innerHTML.trim().slice(0, 250) + (el.innerHTML.length > 250 ? '...' : '');
+        }
+        const card = createCard(`Element ${i + 1}`, text);
+        resultsEl.appendChild(card);
+      });
+
+      showMessage(`Success: Found ${elements.length} element(s).`, 'success');
+
+    } catch (err) {
+      showMessage(`Error fetching or parsing the website: ${err.message}`, 'error');
+    } finally {
+      scrapeBtn.disabled = false;
+      scrapeBtn.textContent = 'Scrape';
+    }
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const url = urlInput.value.trim();
+    const selector = selectorInput.value.trim();
+
+    if (!url || !selector) {
+      showMessage('Please enter both a valid URL and CSS selector.', 'error');
+      return;
+    }
+
+    scrape(url, selector);
+  });
+</script>
+
+</body>
+</html>
+
